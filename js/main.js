@@ -21,13 +21,12 @@ class Boot extends Phaser.Scene{
   make('enemyElite',46,90,g=>{g.fillStyle(0x29242a).fillRect(8,2,30,11);g.fillStyle(0xb98770).fillRect(12,13,22,15);g.fillStyle(0x4f2638).fillRect(6,28,34,39);g.fillStyle(0x342a2f).fillRect(9,67,10,23).fillRect(27,67,10,23);g.fillStyle(0x8d8d8d).fillRect(39,19,5,48)});
  }
 }
-}
 class Menu extends Phaser.Scene{
  constructor(){super('menu')}
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.0',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.1',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
