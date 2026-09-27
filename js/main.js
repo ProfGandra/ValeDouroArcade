@@ -10,14 +10,24 @@ Object.keys(roster).forEach(k=>run.hp[k]=roster[k].hp);
 
 class Boot extends Phaser.Scene{
  constructor(){super('boot')}
- create(){this.scene.start('menu')}
+ create(){this.makePixelTextures();this.scene.start('menu')}
+ makePixelTextures(){
+  const make=(key,w,h,draw)=>{const g=this.make.graphics({x:0,y:0,add:false});draw(g);g.generateTexture(key,w,h);g.destroy()};
+  make('mauricius',36,76,g=>{g.fillStyle(0x273746).fillRect(8,2,20,10);g.fillStyle(0xd6ad83).fillRect(10,12,16,14);g.fillStyle(0x3f6090).fillRect(7,26,22,30);g.fillStyle(0x9aa5ad).fillRect(2,28,7,28);g.fillStyle(0x6e4d2f).fillRect(10,56,7,20).fillRect(21,56,7,20);g.fillStyle(0xd7d7d7).fillRect(29,25,3,34)});
+  make('cassandra',36,76,g=>{g.fillStyle(0xe3c39e).fillRect(10,8,16,16);g.fillStyle(0xd8c78b).fillTriangle(10,10,4,14,10,16).fillTriangle(26,10,32,14,26,16);g.fillStyle(0x395c48).fillRect(8,24,20,34);g.fillStyle(0xb7c2b1).fillRect(29,20,2,43);g.fillStyle(0x594334).fillRect(10,58,7,18).fillRect(21,58,7,18);g.fillStyle(0x5b4938).fillRect(9,2,18,7)});
+  make('aurus',36,76,g=>{g.fillStyle(0x4b3526).fillRect(8,3,20,9);g.fillStyle(0xd1a477).fillRect(10,12,16,14);g.fillStyle(0x596743).fillRect(7,26,22,31);g.fillStyle(0x463526).fillRect(10,57,7,19).fillRect(21,57,7,19);g.lineStyle(3,0x8d6b3e).strokeCircle(30,35,9);g.fillStyle(0xc9b07a).fillRect(3,27,3,35)});
+  make('brokk',48,60,g=>{g.fillStyle(0x4a3428).fillRect(11,2,26,10);g.fillStyle(0xd2a071).fillRect(13,12,22,13);g.fillStyle(0x754b2d).fillTriangle(12,23,36,23,24,43);g.fillStyle(0x6f563d).fillRect(7,25,34,22);g.fillStyle(0x4a3829).fillRect(10,47,10,13).fillRect(28,47,10,13);g.fillStyle(0xa7a7a7).fillRect(39,9,5,42);g.fillStyle(0x8a8a8a).fillRect(34,7,14,8)});
+  make('enemyCommon',34,70,g=>{g.fillStyle(0x3b2525).fillRect(7,2,20,9);g.fillStyle(0xc18e72).fillRect(9,11,16,13);g.fillStyle(0x7b3030).fillRect(6,24,22,30);g.fillStyle(0x49302b).fillRect(8,54,7,16).fillRect(20,54,7,16);g.fillStyle(0xa8a8a8).fillRect(29,21,3,35)});
+  make('enemyElite',46,90,g=>{g.fillStyle(0x29242a).fillRect(8,2,30,11);g.fillStyle(0xb98770).fillRect(12,13,22,15);g.fillStyle(0x4f2638).fillRect(6,28,34,39);g.fillStyle(0x342a2f).fillRect(9,67,10,23).fillRect(27,67,10,23);g.fillStyle(0x8d8d8d).fillRect(39,19,5,48)});
+ }
+}
 }
 class Menu extends Phaser.Scene{
  constructor(){super('menu')}
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.0.9',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.0',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -62,7 +72,7 @@ class Game extends Phaser.Scene{
   this.ground=this.add.rectangle(1200,490,2400,20,0x786a45);this.physics.add.existing(this.ground,true);
   [550,1050,1580,1950].forEach((x,i)=>{const p=this.add.rectangle(x,400-(i%2)*55,180,20,0x66573b);this.physics.add.existing(p,true)});
   const k=run.selected,p=roster[k];
-  this.player=this.add.rectangle(120,420,k==='brokk'?48:36,k==='brokk'?60:76,p.color);this.physics.add.existing(this.player);
+  this.player=this.add.image(120,420,k);this.physics.add.existing(this.player);this.player.body.setSize(k==='brokk'?48:36,k==='brokk'?60:76);
   this.player.body.setCollideWorldBounds(true).setGravityY(900);this.physics.add.collider(this.player,this.ground);
   this.physics.world.staticBodies.entries.slice(1).forEach(b=>this.physics.add.collider(this.player,b.gameObject));
   this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;this.player.facing=1;this.player.comboStep=0;this.player.comboUntil=0;this.player.defenseStarted=0;this.player.shiftWasDown=false;this.player.dodging=false;this.player.dodgeUntil=0;this.player.nextDodge=0;
@@ -79,7 +89,7 @@ class Game extends Phaser.Scene{
  }
  spawnEnemy(x,type='common'){
   const elite=type==='elite';
-  const e=this.add.rectangle(x,elite?410:420,elite?46:34,elite?90:70,elite?0x4f2638:0x7b3030);this.physics.add.existing(e);
+  const e=this.add.image(x,elite?410:420,elite?'enemyElite':'enemyCommon');this.physics.add.existing(e);e.body.setSize(elite?46:34,elite?90:70);
   e.body.setGravityY(900);e.type=type;e.maxHp=elite?150:90;e.hp=e.maxHp;e.baseColor=elite?0x4f2638:0x7b3030;
   e.dir=-1;e.state='chase';e.nextAttack=0;e.attackDamage=elite?8:5;e.stunnedUntil=0;
   this.enemies.add(e);
@@ -100,7 +110,7 @@ class Game extends Phaser.Scene{
   this.enemies.children.iterate(e=>{
    if(!e?.body)return;
    if(e.stunnedUntil&&time<e.stunnedUntil){e.body.setVelocityX(0);return}
-   if(e.stunnedUntil&&time>=e.stunnedUntil){e.stunnedUntil=0;e.state='chase';e.setFillStyle(e.baseColor)}
+   if(e.stunnedUntil&&time>=e.stunnedUntil){e.stunnedUntil=0;e.state='chase';e.setTint(e.baseColor)}
    const d=this.player.x-e.x,dist=Math.abs(d);
    if(e.state==='windup'||e.state==='recover'){e.body.setVelocityX(0);return}
    if(dist>62){e.body.setVelocityX(Math.sign(d)*55);e.state='chase'}
@@ -125,10 +135,7 @@ class Game extends Phaser.Scene{
    return
   }
   this.player.blocking=shiftDown&&this.player.body.blocked.down;
-  if(this.player.blocking){
-   const c=run.selected==='mauricius'?0xd9d2bd:run.selected==='cassandra'?0xbfe7d0:0xd3a76a;
-   this.player.setStrokeStyle(4,c);
-  }else this.player.setStrokeStyle();
+  if(this.player.blocking){this.player.setTint(run.selected==='mauricius'?0xd9d2bd:run.selected==='cassandra'?0xbfe7d0:0xd3a76a)}else this.player.clearTint();
  }
  attack(){
   if(!this.player?.body||this.player.blocking||this.player.heavyWindup||this.time.now<this.player.nextAttack)return;
@@ -204,33 +211,33 @@ class Game extends Phaser.Scene{
   if(!e.active)return;
   if(opts.brokk&&opts.critical){
    if(e.type==='common'){this.brokkCriticalLaunch(e,dir);return}
-   e.hp-=Math.round(d*1.5);e.stunnedUntil=this.time.now+1800;e.state='stunned';e.body.setVelocityX(dir*95);e.setFillStyle(0xd8a64a);
+   e.hp-=Math.round(d*1.5);e.stunnedUntil=this.time.now+1800;e.state='stunned';e.body.setVelocityX(dir*95);e.setTint(0xd8a64a);
    const stun=this.add.text(e.x,e.y-62,'STUN!',{fontFamily:'monospace',fontSize:'14px',color:'#ffe08a',stroke:'#000',strokeThickness:3}).setOrigin(.5);
    this.tweens.add({targets:stun,y:stun.y-20,alpha:0,duration:700,onComplete:()=>stun.destroy()});
    this.cameras.main.shake(120,.011);if(e.hp<=0)e.destroy();return
   }
-  e.hp-=d;e.setFillStyle(0xd36b55);
+  e.hp-=d;e.setTint(0xd36b55);
   const push=opts.push??(run.selected==='brokk'?230:run.selected==='mauricius'?120:70);
   e.body.setVelocityX(dir*push);
-  this.time.delayedCall(80,()=>e.active&&e.setFillStyle(e.baseColor||0x7b3030));if(e.hp<=0)e.destroy()
+  this.time.delayedCall(80,()=>e.active&&e.clearTint());if(e.hp<=0)e.destroy()
  }
  brokkCriticalLaunch(e,dir){
   e.state='launched';e.body.setAllowGravity(false);e.body.setVelocity(dir*760,-210);e.body.setAngularVelocity(dir*720);
-  e.setFillStyle(0xffc15a);this.cameras.main.shake(150,.014);
+  e.setTint(0xffc15a);this.cameras.main.shake(150,.014);
   const crit=this.add.text(e.x,e.y-58,'CRÍTICO!',{fontFamily:'monospace',fontSize:'18px',color:'#ffd56a',stroke:'#000',strokeThickness:4}).setOrigin(.5);
   this.tweens.add({targets:crit,y:crit.y-28,alpha:0,duration:650,onComplete:()=>crit.destroy()});
   this.time.delayedCall(900,()=>e.active&&e.destroy());
  }
  enemyAttack(e,dir){
   if(!e.active||e.state==='windup'||e.state==='recover')return;
-  e.state='windup';e.setFillStyle(0xb85b3f);
+  e.state='windup';e.setTint(0xb85b3f);
   this.time.delayedCall(260,()=>{
    if(!e.active)return;
    const hit=this.add.rectangle(e.x+dir*32,e.y,42,48,0xff7b55,.25);this.physics.add.existing(hit);hit.body.setAllowGravity(false);
    let landed=false;
    this.physics.add.overlap(hit,this.player,()=>{if(!landed){landed=true;this.hurtPlayer(e,dir)}},null,this);
    this.time.delayedCall(110,()=>hit.active&&hit.destroy());
-   e.state='recover';e.setFillStyle(0x5f2424);
+   e.state='recover';e.setTint(0x5f2424);
    this.time.delayedCall(520,()=>{if(e.active){e.state='chase';e.nextAttack=this.time.now+500;e.setFillStyle(0x7b3030)}});
   });
  }
@@ -252,8 +259,8 @@ class Game extends Phaser.Scene{
   this.player.hp-=damage;run.hp[run.selected]=this.player.hp;this.player.iframes=parried?300:defended?420:700;
   this.player.body.setVelocityX((dir||Math.sign(this.player.x-e.x)||1)*(defended?35:120));this.player.body.setVelocityY(defended?0:-90);
   if(parried){
-   e.state='recover';e.nextAttack=this.time.now+800;e.body.setVelocityX(-this.player.facing*120);e.setFillStyle(0xc7b16b);
-   this.time.delayedCall(420,()=>e.active&&e.setFillStyle(e.baseColor||0x7b3030));
+   e.state='recover';e.nextAttack=this.time.now+800;e.body.setVelocityX(-this.player.facing*120);e.setTint(0xc7b16b);
+   this.time.delayedCall(420,()=>e.active&&e.clearTint());
   }
   if(defended){const label=parried?'APAROU!':k==='mauricius'?'BLOQUEIO!':k==='cassandra'?'GUARDA!':'DEFESA!';const flash=this.add.text(this.player.x,this.player.y-58,label,{fontFamily:'monospace',fontSize:'13px',color:'#f4df9b'}).setOrigin(.5);this.tweens.add({targets:flash,y:flash.y-18,alpha:0,duration:420,onComplete:()=>flash.destroy()})}
   this.cameras.main.shake(70,.004);this.player.setAlpha(.55);
