@@ -177,3 +177,14 @@ Construir um protótipo de gameplay com:
 7. reinício da fase com outro personagem após derrota.
 
 Depois validar sensação de jogo antes de expandir fases, especiais e arte definitiva.
+
+
+## Sistema de críticos — Brokk
+- Inimigos comuns devem exigir normalmente 2–3 golpes para serem derrotados.
+- Para Brokk, um inimigo comum típico deve cair em 2 golpes pesados normais.
+- Chance inicial de crítico de Brokk: **10%**, sujeita a balanceamento.
+- **Crítico contra infantaria comum:** derrota instantânea e arremesso do inimigo para fora da cena.
+- **Crítico contra inimigos pesados/elite:** dano aumentado e **STUN** temporário; não há arremesso automático.
+- Durante o STUN, o inimigo não anda nem ataca e fica vulnerável a um novo golpe.
+- **Chefes:** futuramente, críticos causarão dano aumentado e stagger curto, nunca stun longo ou eliminação automática.
+- O crítico de Brokk deve ter impacto visual superior ao golpe normal: knockback, screen shake e, futuramente, hit-stop e animação própria.
