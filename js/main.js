@@ -17,7 +17,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.0.1',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.0.2',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -72,20 +72,29 @@ class Game extends Phaser.Scene{
   [620,880,1240,1490,1770,2140].forEach(x=>this.spawnEnemy(x));
   this.physics.add.collider(this.enemies,this.ground);
   this.physics.world.staticBodies.entries.slice(1).forEach(b=>this.physics.add.collider(this.enemies,b.gameObject));
-  this.physics.add.overlap(this.player,this.enemies,(_,e)=>this.hurtPlayer(e),null,this);
   this.input.on('pointerdown',()=>this.attack());
   this.ammo=(k==='aurus'&&run.style==='bow')?20:null;
   this.ui=this.add.text(18,18,'',{fontFamily:'monospace',fontSize:'18px',color:'#fff',backgroundColor:'#000a',padding:{x:10,y:8}}).setScrollFactor(0).setDepth(20);
   this.help=this.add.text(18,H-38,'Mover: WASD/setas | Pular: Espaço | Atacar: clique',{fontFamily:'monospace',fontSize:'14px',color:'#fff'}).setScrollFactor(0).setDepth(20);
  }
- spawnEnemy(x){const e=this.add.rectangle(x,420,34,70,0x7b3030);this.physics.add.existing(e);e.body.setGravityY(900);e.hp=55;e.dir=-1;this.enemies.add(e)}
+ spawnEnemy(x){
+  const e=this.add.rectangle(x,420,34,70,0x7b3030);this.physics.add.existing(e);
+  e.body.setGravityY(900);e.hp=55;e.dir=-1;e.state='chase';e.nextAttack=0;e.attackDamage=5;
+  this.enemies.add(e);
+ }
  update(time){
   if(!this.player||!this.player.body)return;
   const p=roster[run.selected],left=this.cursors.left.isDown||this.wasd.A.isDown,right=this.cursors.right.isDown||this.wasd.D.isDown;
   this.player.body.setVelocityX(left?-p.speed:right?p.speed:0);
   if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down)this.player.body.setVelocityY(-p.jump);
   if(this.player.iframes>0)this.player.iframes-=this.game.loop.delta;
-  this.enemies.children.iterate(e=>{if(!e?.body)return;const d=this.player.x-e.x;e.body.setVelocityX(Math.sign(d)*55)});
+  this.enemies.children.iterate(e=>{
+   if(!e?.body)return;
+   const d=this.player.x-e.x,dist=Math.abs(d);
+   if(e.state==='windup'||e.state==='recover'){e.body.setVelocityX(0);return}
+   if(dist>62){e.body.setVelocityX(Math.sign(d)*55);e.state='chase'}
+   else{e.body.setVelocityX(0);if(time>=e.nextAttack)this.enemyAttack(e,Math.sign(d)||1)}
+  });
   const ammo=this.ammo===null?'':(' | Flechas '+this.ammo+'/30'+(this.ammo<=0?' | ADAGA':''));
   this.ui.setText(p.name+' | HP '+Math.max(0,Math.ceil(this.player.hp))+'/'+p.hp+ammo);
  }
@@ -105,7 +114,27 @@ class Game extends Phaser.Scene{
   this.time.delayedCall(1600,()=>ar.active&&ar.destroy());
  }
  hitEnemy(e,d){if(!e.active)return;e.hp-=d;e.setFillStyle(0xd36b55);this.time.delayedCall(80,()=>e.active&&e.setFillStyle(0x7b3030));if(e.hp<=0)e.destroy()}
- hurtPlayer(e){if(this.player.iframes>0)return;this.player.hp-=14;run.hp[run.selected]=this.player.hp;this.player.iframes=650;this.cameras.main.shake(90,.006);if(this.player.hp<=0)this.die()}
+ enemyAttack(e,dir){
+  if(!e.active||e.state==='windup'||e.state==='recover')return;
+  e.state='windup';e.setFillStyle(0xb85b3f);
+  this.time.delayedCall(260,()=>{
+   if(!e.active)return;
+   const hit=this.add.rectangle(e.x+dir*32,e.y,42,48,0xff7b55,.25);this.physics.add.existing(hit);hit.body.setAllowGravity(false);
+   let landed=false;
+   this.physics.add.overlap(hit,this.player,()=>{if(!landed){landed=true;this.hurtPlayer(e,dir)}},null,this);
+   this.time.delayedCall(110,()=>hit.active&&hit.destroy());
+   e.state='recover';e.setFillStyle(0x5f2424);
+   this.time.delayedCall(520,()=>{if(e.active){e.state='chase';e.nextAttack=this.time.now+500;e.setFillStyle(0x7b3030)}});
+  });
+ }
+ hurtPlayer(e,dir){
+  if(this.player.iframes>0)return;
+  this.player.hp-=e.attackDamage||5;run.hp[run.selected]=this.player.hp;this.player.iframes=700;
+  this.player.body.setVelocityX((dir||Math.sign(this.player.x-e.x)||1)*120);this.player.body.setVelocityY(-90);
+  this.cameras.main.shake(70,.004);this.player.setAlpha(.55);
+  this.time.delayedCall(120,()=>this.player?.active&&this.player.setAlpha(1));
+  if(this.player.hp<=0)this.die()
+ }
  die(){run.hp[run.selected]=0;run.dead.add(run.selected);this.physics.pause();this.add.text(W/2,H/2,'DERROTADO',{fontFamily:'monospace',fontSize:'56px',color:'#d55',stroke:'#000',strokeThickness:8}).setOrigin(.5).setScrollFactor(0).setDepth(30);this.time.delayedCall(1300,()=>this.scene.start('select'))}
 }
 new Phaser.Game({type:Phaser.AUTO,width:W,height:H,parent:'game',pixelArt:true,physics:{default:'arcade',arcade:{gravity:{y:0},debug:false}},scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:[Boot,Menu,Select,Game]});
