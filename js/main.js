@@ -17,7 +17,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.0.3',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.0.4',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -65,7 +65,7 @@ class Game extends Phaser.Scene{
   this.player=this.add.rectangle(120,420,k==='brokk'?48:36,k==='brokk'?60:76,p.color);this.physics.add.existing(this.player);
   this.player.body.setCollideWorldBounds(true).setGravityY(900);this.physics.add.collider(this.player,this.ground);
   this.physics.world.staticBodies.entries.slice(1).forEach(b=>this.physics.add.collider(this.player,b.gameObject));
-  this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;
+  this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;
   this.cursors=this.input.keyboard.createCursorKeys();this.wasd=this.input.keyboard.addKeys('W,A,S,D');this.keys=this.input.keyboard.addKeys('SHIFT');
   this.cameras.main.setBounds(0,0,2400,H);this.cameras.main.startFollow(this.player,true,.08,.08);
   this.enemies=this.physics.add.group();
@@ -86,7 +86,7 @@ class Game extends Phaser.Scene{
   if(!this.player||!this.player.body)return;
   const p=roster[run.selected],left=this.cursors.left.isDown||this.wasd.A.isDown,right=this.cursors.right.isDown||this.wasd.D.isDown;
   this.player.blocking=run.selected==='mauricius'&&this.keys.SHIFT.isDown&&this.player.body.blocked.down;
-  const moveSpeed=this.player.blocking?p.speed*.38:p.speed;
+  const moveSpeed=this.player.blocking?p.speed*.38:(this.player.heavyWindup?p.speed*.28:p.speed);
   this.player.body.setVelocityX(left?-moveSpeed:right?moveSpeed:0);
   if(this.player.blocking)this.player.setStrokeStyle(4,0xd9d2bd);else this.player.setStrokeStyle();
   if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down)this.player.body.setVelocityY(-p.jump);
@@ -102,9 +102,10 @@ class Game extends Phaser.Scene{
   this.ui.setText(p.name+' | HP '+Math.max(0,Math.ceil(this.player.hp))+'/'+p.hp+ammo);
  }
  attack(){
-  if(!this.player?.body||this.player.blocking||this.time.now<this.player.nextAttack)return;
+  if(!this.player?.body||this.player.blocking||this.player.heavyWindup||this.time.now<this.player.nextAttack)return;
   const p=roster[run.selected];
-  const cooldown=run.selected==='mauricius'?360:run.selected==='brokk'?520:run.selected==='cassandra'?240:300;
+  if(run.selected==='brokk'){this.brokkHeavyAttack(p);return}
+  const cooldown=run.selected==='mauricius'?360:run.selected==='cassandra'?240:300;
   this.player.nextAttack=this.time.now+cooldown;
   if(run.selected==='aurus'&&run.style==='bow'&&this.ammo>0){this.ammo--;this.shootArrow(p.damage);return}
   const world=this.input.activePointer.positionToCamera(this.cameras.main),dir=world.x>=this.player.x?1:-1;
@@ -112,6 +113,25 @@ class Game extends Phaser.Scene{
   const box=this.add.rectangle(this.player.x+dir*(reach*.72),this.player.y,reach,55,0xffdd88,.35);this.physics.add.existing(box);
   this.physics.add.overlap(box,this.enemies,(_,e)=>this.hitEnemy(e,p.damage,dir),null,this);
   this.time.delayedCall(90,()=>box.destroy());
+ }
+ brokkHeavyAttack(p){
+  const world=this.input.activePointer.positionToCamera(this.cameras.main),dir=world.x>=this.player.x?1:-1;
+  this.player.heavyWindup=true;this.player.nextAttack=this.time.now+720;
+  const marker=this.add.text(this.player.x,this.player.y-52,'!',{fontFamily:'monospace',fontSize:'28px',color:'#f1c36f',stroke:'#000',strokeThickness:4}).setOrigin(.5);
+  this.time.delayedCall(260,()=>{
+   if(!this.player?.active){marker.destroy();return}
+   marker.destroy();
+   const box=this.add.rectangle(this.player.x+dir*38,this.player.y+5,62,62,0xffb24a,.42);this.physics.add.existing(box);box.body.setAllowGravity(false);
+   let connected=false;
+   this.physics.add.overlap(box,this.enemies,(_,e)=>{
+    if(!e.active)return;connected=true;this.hitEnemy(e,p.damage+8,dir);
+   },null,this);
+   this.time.delayedCall(115,()=>{
+    if(connected)this.cameras.main.shake(105,.009);
+    if(box.active)box.destroy();
+   });
+   this.player.heavyWindup=false;
+  });
  }
  shootArrow(dmg){
   const world=this.input.activePointer.positionToCamera(this.cameras.main),a=Phaser.Math.Angle.Between(this.player.x,this.player.y,world.x,world.y);
