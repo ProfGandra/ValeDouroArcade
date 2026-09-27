@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.4',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.5',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -64,7 +64,7 @@ class Game extends Phaser.Scene{
   [550,1050,1580,1950].forEach((x,i)=>{const p=this.add.rectangle(x,400-(i%2)*55,180,20,0x66573b);this.physics.add.existing(p,true)});
   const k=run.selected,p=roster[k];
   this.player=this.add.rectangle(120,420,k==='brokk'?48:36,k==='brokk'?60:76,p.color);this.physics.add.existing(this.player);
-  if(k==='brokk'){this.player.setAlpha(0);this.brokkVisual=this.add.image(this.player.x,this.player.y,'brokk-idle').setScale(1.6).setDepth(5)}
+  if(k==='brokk'){this.player.setVisible(false);this.brokkVisual=this.add.image(this.player.x,this.player.y,'brokk-idle').setScale(1.6).setDepth(5)}
   this.player.body.setCollideWorldBounds(true).setGravityY(900);this.physics.add.collider(this.player,this.ground);
   this.physics.world.staticBodies.entries.slice(1).forEach(b=>this.physics.add.collider(this.player,b.gameObject));
   this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;this.player.facing=1;this.player.comboStep=0;this.player.comboUntil=0;this.player.defenseStarted=0;this.player.shiftWasDown=false;this.player.dodging=false;this.player.dodgeUntil=0;this.player.nextDodge=0;
@@ -259,8 +259,8 @@ class Game extends Phaser.Scene{
    this.time.delayedCall(420,()=>e.active&&e.setFillStyle(e.baseColor||0x7b3030));
   }
   if(defended){const label=parried?'APAROU!':k==='mauricius'?'BLOQUEIO!':k==='cassandra'?'GUARDA!':'DEFESA!';const flash=this.add.text(this.player.x,this.player.y-58,label,{fontFamily:'monospace',fontSize:'13px',color:'#f4df9b'}).setOrigin(.5);this.tweens.add({targets:flash,y:flash.y-18,alpha:0,duration:420,onComplete:()=>flash.destroy()})}
-  this.cameras.main.shake(70,.004);this.player.setAlpha(.55);
-  this.time.delayedCall(120,()=>this.player?.active&&this.player.setAlpha(1));
+  this.cameras.main.shake(70,.004);if(this.brokkVisual)this.brokkVisual.setAlpha(.55);else this.player.setAlpha(.55);
+  this.time.delayedCall(120,()=>{if(this.brokkVisual?.active)this.brokkVisual.setAlpha(1);else if(this.player?.active)this.player.setAlpha(1)});
   if(this.player.hp<=0)this.die()
  }
  die(){run.hp[run.selected]=0;run.dead.add(run.selected);this.physics.pause();this.add.text(W/2,H/2,'DERROTADO',{fontFamily:'monospace',fontSize:'56px',color:'#d55',stroke:'#000',strokeThickness:8}).setOrigin(.5).setScrollFactor(0).setDepth(30);this.time.delayedCall(1300,()=>this.scene.start('select'))}
