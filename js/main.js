@@ -10,15 +10,15 @@ Object.keys(roster).forEach(k=>run.hp[k]=roster[k].hp);
 
 class Boot extends Phaser.Scene{
  constructor(){super('boot')}
- preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png');this.load.spritesheet('brokk-run','assets/characters/brokk/run_sheet.png',{frameWidth:84,frameHeight:64})}
- create(){this.anims.create({key:'brokk-running',frames:this.anims.generateFrameNumbers('brokk-run',{start:0,end:3}),frameRate:10,repeat:-1});this.scene.start('menu')}
+ preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png');this.load.image('brokk-step-1','assets/characters/brokk/step_1.png');this.load.image('brokk-step-2','assets/characters/brokk/step_2.png')}
+ create(){this.scene.start('menu')}
 }
 class Menu extends Phaser.Scene{
  constructor(){super('menu')}
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.8',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.9',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -99,8 +99,11 @@ class Game extends Phaser.Scene{
   if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1;
   if(this.brokkVisual){
    const running=this.player.body.blocked.down&&Math.abs(this.player.body.velocity.x)>10;
-   if(running){if(this.brokkVisual.anims.currentAnim?.key!=='brokk-running')this.brokkVisual.play('brokk-running')}
-   else{if(this.brokkVisual.anims.isPlaying)this.brokkVisual.stop();if(this.brokkVisual.texture.key!=='brokk-idle')this.brokkVisual.setTexture('brokk-idle')}
+   if(running){
+    const cycle=Math.floor(this.time.now/120)%4;
+    const key=cycle===1?'brokk-step-1':cycle===3?'brokk-step-2':'brokk-idle';
+    if(this.brokkVisual.texture.key!==key)this.brokkVisual.setTexture(key);
+   }else if(this.brokkVisual.texture.key!=='brokk-idle')this.brokkVisual.setTexture('brokk-idle');
    this.brokkVisual.setPosition(this.player.x,this.player.y-4);this.brokkVisual.setFlipX(this.player.facing<0)
   }
   if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down)this.player.body.setVelocityY(-p.jump);
