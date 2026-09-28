@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.11',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.12',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -64,7 +64,7 @@ class Game extends Phaser.Scene{
   [550,1050,1580,1950].forEach((x,i)=>{const p=this.add.rectangle(x,400-(i%2)*55,180,20,0x66573b);this.physics.add.existing(p,true)});
   const k=run.selected,p=roster[k];
   this.player=this.add.rectangle(120,420,k==='brokk'?48:36,k==='brokk'?60:76,p.color);this.physics.add.existing(this.player);
-  if(k==='brokk'){this.player.setVisible(false);this.brokkVisual=this.add.sprite(this.player.x,this.player.y,'brokk-idle').setScale(0.20).setDepth(5)}
+  if(k==='brokk'){this.player.setVisible(false);this.brokkVisual=this.add.sprite(this.player.x,this.player.y,'brokk-idle').setScale(0.17).setDepth(5)}
   this.player.body.setCollideWorldBounds(true).setGravityY(900);this.physics.add.collider(this.player,this.ground);
   this.physics.world.staticBodies.entries.slice(1).forEach(b=>this.physics.add.collider(this.player,b.gameObject));
   this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;this.player.facing=1;this.player.comboStep=0;this.player.comboUntil=0;this.player.defenseStarted=0;this.player.shiftWasDown=false;this.player.dodging=false;this.player.dodgeUntil=0;this.player.nextDodge=0;
@@ -104,7 +104,7 @@ class Game extends Phaser.Scene{
     const key=cycle===1?'brokk-step-1':cycle===3?'brokk-step-2':'brokk-idle';
     if(this.brokkVisual.texture.key!==key)this.brokkVisual.setTexture(key);
    }else if(this.brokkVisual.texture.key!=='brokk-idle')this.brokkVisual.setTexture('brokk-idle');
-   this.brokkVisual.setPosition(this.player.x,this.player.y-4);this.brokkVisual.setFlipX(this.player.facing<0)
+   this.brokkVisual.setPosition(this.player.x,this.player.y-13);this.brokkVisual.setFlipX(this.player.facing<0)
   }
   if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down)this.player.body.setVelocityY(-p.jump);
   if(this.player.iframes>0)this.player.iframes-=this.game.loop.delta;
