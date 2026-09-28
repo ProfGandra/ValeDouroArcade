@@ -10,7 +10,7 @@ Object.keys(roster).forEach(k=>run.hp[k]=roster[k].hp);
 
 class Boot extends Phaser.Scene{
  constructor(){super('boot')}
- preload(){['idle','run','jump','attack','defense'].forEach(n=>this.load.image('brokk-'+n,'assets/characters/brokk/'+n+'.png'))}
+ preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png')}
  create(){this.scene.start('menu')}
 }
 class Menu extends Phaser.Scene{
@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.6',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.7',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -97,16 +97,7 @@ class Game extends Phaser.Scene{
   const moveSpeed=this.player.heavyWindup?p.speed*.28:p.speed*defenseSlow;
   if(!this.player.dodging)this.player.body.setVelocityX(left?-moveSpeed:right?moveSpeed:0);
   if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1;
-  if(this.brokkVisual){
-   let pose='idle';
-   if(this.player.heavyWindup)pose='attack';
-   else if(this.player.blocking)pose='defense';
-   else if(!this.player.body.blocked.down)pose='jump';
-   else if(Math.abs(this.player.body.velocity.x)>10)pose='run';
-   const key='brokk-'+pose;
-   if(this.brokkVisual.texture.key!==key)this.brokkVisual.setTexture(key);
-   this.brokkVisual.setPosition(this.player.x,this.player.y-4);this.brokkVisual.setFlipX(this.player.facing<0)
-  }
+  if(this.brokkVisual){this.brokkVisual.setPosition(this.player.x,this.player.y-4);this.brokkVisual.setFlipX(this.player.facing<0)}
   if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down)this.player.body.setVelocityY(-p.jump);
   if(this.player.iframes>0)this.player.iframes-=this.game.loop.delta;
   this.enemies.children.iterate(e=>{
