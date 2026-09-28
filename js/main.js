@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.18',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.19',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -105,8 +105,8 @@ class Game extends Phaser.Scene{
     if(this.brokkVisual.texture.key!==key)this.brokkVisual.setTexture(key);
    }else if(this.brokkVisual.texture.key!=='brokk-idle')this.brokkVisual.setTexture('brokk-idle');
    const brokkFootY=this.player.body.bottom;
-   const brokkHalfVisual=this.brokkVisual.displayHeight/2;
-   this.brokkVisual.setPosition(this.player.x,brokkFootY-brokkHalfVisual);this.brokkVisual.setFlipX(this.player.facing<0)
+   const brokkFootOffset={ 'brokk-idle':37, 'brokk-step-1':36, 'brokk-step-2':36 }[this.brokkVisual.texture.key]??37;
+   this.brokkVisual.setPosition(this.player.x,brokkFootY-brokkFootOffset);this.brokkVisual.setFlipX(this.player.facing<0)
   }
   if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down)this.player.body.setVelocityY(-p.jump);
   if(this.player.iframes>0)this.player.iframes-=this.game.loop.delta;
