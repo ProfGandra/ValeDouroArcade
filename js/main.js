@@ -3,7 +3,7 @@ const roster={
  mauricius:{name:'Mauricius',hp:100,speed:210,jump:430,damage:30,color:0x4169a1},
  cassandra:{name:'Cassandra Arven',hp:90,speed:235,jump:450,damage:25,color:0x6f9b68},
  aurus:{name:'Aurus',hp:85,speed:250,jump:470,damage:22,color:0x8a6b45},
- brokk:{name:'Brokk Pedra-Funda',hp:125,speed:180,jump:380,damage:38,color:0x8c5b3e}
+ brokk:{name:'Brokk Pedra-Funda',hp:125,speed:180,jump:383.8,damage:38,color:0x8c5b3e}
 };
 const run={dead:new Set(),selected:null,style:'blade',hp:{}};
 Object.keys(roster).forEach(k=>run.hp[k]=roster[k].hp);
@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.13',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.14',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
