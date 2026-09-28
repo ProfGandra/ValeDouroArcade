@@ -10,15 +10,15 @@ Object.keys(roster).forEach(k=>run.hp[k]=roster[k].hp);
 
 class Boot extends Phaser.Scene{
  constructor(){super('boot')}
- preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png')}
- create(){this.scene.start('menu')}
+ preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png');this.load.spritesheet('brokk-run','assets/characters/brokk/run_sheet.png',{frameWidth:84,frameHeight:64})}
+ create(){this.anims.create({key:'brokk-running',frames:this.anims.generateFrameNumbers('brokk-run',{start:0,end:3}),frameRate:10,repeat:-1});this.scene.start('menu')}
 }
 class Menu extends Phaser.Scene{
  constructor(){super('menu')}
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.7',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.8',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -64,7 +64,7 @@ class Game extends Phaser.Scene{
   [550,1050,1580,1950].forEach((x,i)=>{const p=this.add.rectangle(x,400-(i%2)*55,180,20,0x66573b);this.physics.add.existing(p,true)});
   const k=run.selected,p=roster[k];
   this.player=this.add.rectangle(120,420,k==='brokk'?48:36,k==='brokk'?60:76,p.color);this.physics.add.existing(this.player);
-  if(k==='brokk'){this.player.setVisible(false);this.brokkVisual=this.add.image(this.player.x,this.player.y,'brokk-idle').setScale(1.6).setDepth(5)}
+  if(k==='brokk'){this.player.setVisible(false);this.brokkVisual=this.add.sprite(this.player.x,this.player.y,'brokk-idle').setScale(1.6).setDepth(5)}
   this.player.body.setCollideWorldBounds(true).setGravityY(900);this.physics.add.collider(this.player,this.ground);
   this.physics.world.staticBodies.entries.slice(1).forEach(b=>this.physics.add.collider(this.player,b.gameObject));
   this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;this.player.facing=1;this.player.comboStep=0;this.player.comboUntil=0;this.player.defenseStarted=0;this.player.shiftWasDown=false;this.player.dodging=false;this.player.dodgeUntil=0;this.player.nextDodge=0;
@@ -97,7 +97,12 @@ class Game extends Phaser.Scene{
   const moveSpeed=this.player.heavyWindup?p.speed*.28:p.speed*defenseSlow;
   if(!this.player.dodging)this.player.body.setVelocityX(left?-moveSpeed:right?moveSpeed:0);
   if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1;
-  if(this.brokkVisual){this.brokkVisual.setPosition(this.player.x,this.player.y-4);this.brokkVisual.setFlipX(this.player.facing<0)}
+  if(this.brokkVisual){
+   const running=this.player.body.blocked.down&&Math.abs(this.player.body.velocity.x)>10;
+   if(running){if(this.brokkVisual.anims.currentAnim?.key!=='brokk-running')this.brokkVisual.play('brokk-running')}
+   else{if(this.brokkVisual.anims.isPlaying)this.brokkVisual.stop();if(this.brokkVisual.texture.key!=='brokk-idle')this.brokkVisual.setTexture('brokk-idle')}
+   this.brokkVisual.setPosition(this.player.x,this.player.y-4);this.brokkVisual.setFlipX(this.player.facing<0)
+  }
   if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down)this.player.body.setVelocityY(-p.jump);
   if(this.player.iframes>0)this.player.iframes-=this.game.loop.delta;
   this.enemies.children.iterate(e=>{
