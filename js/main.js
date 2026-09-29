@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.33',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.34',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -124,7 +124,7 @@ class Game extends Phaser.Scene{
    const visual={ 
     'brokk-idle':{scale:.15,foot:37},'brokk-step-1':{scale:.15,foot:36},'brokk-step-2':{scale:.15,foot:36},
     'brokk-jump-up':{scale:.20,foot:38},'brokk-jump-air':{scale:.16,foot:41},'brokk-jump-land':{scale:.18,foot:31},
-    'brokk-attack-1-windup':{scale:.20,foot:31},'brokk-attack-1-strike':{scale:.20,foot:29},'brokk-attack-1-recovery':{scale:.20,foot:27},'brokk-defense':{scale:.075,foot:34}
+    'brokk-attack-1-windup':{scale:.20,foot:31},'brokk-attack-1-strike':{scale:.20,foot:29},'brokk-attack-1-recovery':{scale:.20,foot:27},'brokk-defense':{scale:.075,foot:32}
    }[key];
    this.brokkVisual.setScale(visual.scale);
    this.brokkVisual.setPosition(this.player.x,this.player.body.bottom-visual.foot);this.brokkVisual.setFlipX(this.player.facing<0)
@@ -280,10 +280,11 @@ class Game extends Phaser.Scene{
    else if(k==='cassandra'){
     parried=(this.time.now-this.player.defenseStarted)<=300;
     damage=parried?0:Math.max(1,Math.ceil(incoming*.6));
-   }else if(k==='brokk')damage=Math.max(1,Math.ceil(incoming*.5));
+   }else if(k==='brokk')damage=Math.max(1,Math.ceil(incoming*.1));
   }
   this.player.hp-=damage;run.hp[run.selected]=this.player.hp;this.player.iframes=parried?300:defended?420:700;
-  this.player.body.setVelocityX((dir||Math.sign(this.player.x-e.x)||1)*(defended?35:120));this.player.body.setVelocityY(defended?0:-90);
+  const plantedBrokkDefense=defended&&k==='brokk';
+  this.player.body.setVelocityX(plantedBrokkDefense?0:(dir||Math.sign(this.player.x-e.x)||1)*(defended?35:120));this.player.body.setVelocityY(defended?0:-90);
   if(parried){
    e.state='recover';e.nextAttack=this.time.now+800;e.body.setVelocityX(-this.player.facing*120);e.setFillStyle(0xc7b16b);
    this.time.delayedCall(420,()=>e.active&&e.setFillStyle(e.baseColor||0x7b3030));
