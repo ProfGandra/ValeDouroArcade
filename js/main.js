@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.31',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.32',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -124,7 +124,7 @@ class Game extends Phaser.Scene{
    const visual={ 
     'brokk-idle':{scale:.15,foot:37},'brokk-step-1':{scale:.15,foot:36},'brokk-step-2':{scale:.15,foot:36},
     'brokk-jump-up':{scale:.20,foot:38},'brokk-jump-air':{scale:.16,foot:41},'brokk-jump-land':{scale:.18,foot:31},
-    'brokk-attack-1-windup':{scale:.20,foot:31},'brokk-attack-1-strike':{scale:.20,foot:29},'brokk-attack-1-recovery':{scale:.20,foot:27},'brokk-defense':{scale:.06,foot:34}
+    'brokk-attack-1-windup':{scale:.20,foot:31},'brokk-attack-1-strike':{scale:.20,foot:29},'brokk-attack-1-recovery':{scale:.20,foot:27},'brokk-defense':{scale:.07,foot:34}
    }[key];
    this.brokkVisual.setScale(visual.scale);
    this.brokkVisual.setPosition(this.player.x,this.player.body.bottom-visual.foot);this.brokkVisual.setFlipX(this.player.facing<0)
