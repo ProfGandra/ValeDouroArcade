@@ -10,7 +10,7 @@ Object.keys(roster).forEach(k=>run.hp[k]=roster[k].hp);
 
 class Boot extends Phaser.Scene{
  constructor(){super('boot')}
- preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png');this.load.image('brokk-step-1','assets/characters/brokk/step_1.png');this.load.image('brokk-step-2','assets/characters/brokk/step_2.png');this.load.image('brokk-jump-up','assets/characters/brokk/jump_up.png');this.load.image('brokk-jump-air','assets/characters/brokk/jump_air.png');this.load.image('brokk-jump-land','assets/characters/brokk/jump_land.png');this.load.image('brokk-attack-1-windup','assets/characters/brokk/attack_1_windup.png');this.load.image('brokk-attack-1-strike','assets/characters/brokk/attack_1_strike.png');this.load.image('brokk-attack-1-recovery','assets/characters/brokk/attack_1_recovery.png')}
+ preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png');this.load.image('brokk-step-1','assets/characters/brokk/step_1.png');this.load.image('brokk-step-2','assets/characters/brokk/step_2.png');this.load.image('brokk-jump-up','assets/characters/brokk/jump_up.png');this.load.image('brokk-jump-air','assets/characters/brokk/jump_air.png');this.load.image('brokk-jump-land','assets/characters/brokk/jump_land.png');this.load.image('brokk-attack-1-windup','assets/characters/brokk/attack_1_windup.png');this.load.image('brokk-attack-1-strike','assets/characters/brokk/attack_1_strike.png');this.load.image('brokk-attack-1-recovery','assets/characters/brokk/attack_1_recovery.png');this.load.image('brokk-defense','assets/characters/brokk/defense.png')}
  create(){this.scene.start('menu')}
 }
 class Menu extends Phaser.Scene{
@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.25',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.26',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -93,21 +93,24 @@ class Game extends Phaser.Scene{
   if(shiftDown&&!this.player.shiftWasDown)this.startDefense(time);
   this.player.shiftWasDown=shiftDown;
   this.updateDefense(time,shiftDown);
-  const defenseSlow=this.player.blocking?(run.selected==='mauricius'?.38:run.selected==='brokk'?.5:.7):1;
+  const brokkBlocking=run.selected==='brokk'&&this.player.blocking;
+  const defenseSlow=this.player.blocking?(run.selected==='mauricius'?.38:run.selected==='brokk'?0:.7):1;
   const onGroundNow=this.player.body.blocked.down;
   if(run.selected==='brokk'&&onGroundNow&&!this.player.wasGrounded)this.player.brokkLandUntil=time+200;
   const brokkLanding=run.selected==='brokk'&&time<this.player.brokkLandUntil;
   const brokkAttacking=run.selected==='brokk'&&time<this.player.brokkAttackUntil;
   const moveSpeed=this.player.heavyWindup?p.speed*.28:p.speed*defenseSlow;
-  if(brokkLanding||brokkAttacking)this.player.body.setVelocityX(0);
+  if(brokkLanding||brokkAttacking||brokkBlocking)this.player.body.setVelocityX(0);
   else if(!this.player.dodging)this.player.body.setVelocityX(left?-moveSpeed:right?moveSpeed:0);
-  if(!brokkLanding&&!brokkAttacking){if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1}
+  if(!brokkLanding&&!brokkAttacking&&!brokkBlocking){if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1}
   if(this.brokkVisual){
    const onGround=onGroundNow;
    const vy=this.player.body.velocity.y;
    const running=onGround&&!brokkLanding&&Math.abs(this.player.body.velocity.x)>10;
    let key='brokk-idle';
-   if(brokkAttacking){
+   if(brokkBlocking){
+    key='brokk-defense';
+   }else if(brokkAttacking){
     key='brokk-attack-1-'+this.player.brokkAttackPhase;
    }else if(brokkLanding){
     key='brokk-jump-land';
@@ -121,13 +124,13 @@ class Game extends Phaser.Scene{
    const visual={ 
     'brokk-idle':{scale:.15,foot:37},'brokk-step-1':{scale:.15,foot:36},'brokk-step-2':{scale:.15,foot:36},
     'brokk-jump-up':{scale:.20,foot:38},'brokk-jump-air':{scale:.17,foot:41},'brokk-jump-land':{scale:.19,foot:31},
-    'brokk-attack-1-windup':{scale:.20,foot:31},'brokk-attack-1-strike':{scale:.20,foot:29},'brokk-attack-1-recovery':{scale:.20,foot:27}
+    'brokk-attack-1-windup':{scale:.20,foot:31},'brokk-attack-1-strike':{scale:.20,foot:29},'brokk-attack-1-recovery':{scale:.20,foot:27},'brokk-defense':{scale:.20,foot:34}
    }[key];
    this.brokkVisual.setScale(visual.scale);
    this.brokkVisual.setPosition(this.player.x,this.player.body.bottom-visual.foot);this.brokkVisual.setFlipX(this.player.facing<0)
   }
   this.player.wasGrounded=onGroundNow;
-  if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down&&!brokkLanding){this.player.body.setVelocityY(-p.jump);if(run.selected==='brokk')this.player.brokkJumpUpUntil=time+100;}
+  if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down&&!brokkLanding&&!brokkBlocking){this.player.body.setVelocityY(-p.jump);if(run.selected==='brokk')this.player.brokkJumpUpUntil=time+100;}
   if(this.player.iframes>0)this.player.iframes-=this.game.loop.delta;
   this.enemies.children.iterate(e=>{
    if(!e?.body)return;
