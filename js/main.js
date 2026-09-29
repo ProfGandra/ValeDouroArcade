@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.20',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.21',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -67,7 +67,7 @@ class Game extends Phaser.Scene{
   if(k==='brokk'){this.player.setVisible(false);this.brokkVisual=this.add.sprite(this.player.x,this.player.y,'brokk-idle').setScale(0.15).setDepth(5)}
   this.player.body.setCollideWorldBounds(true).setGravityY(900);this.physics.add.collider(this.player,this.ground);
   this.physics.world.staticBodies.entries.slice(1).forEach(b=>this.physics.add.collider(this.player,b.gameObject));
-  this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;this.player.facing=1;this.player.comboStep=0;this.player.comboUntil=0;this.player.defenseStarted=0;this.player.shiftWasDown=false;this.player.dodging=false;this.player.dodgeUntil=0;this.player.nextDodge=0;
+  this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;this.player.facing=1;this.player.comboStep=0;this.player.comboUntil=0;this.player.defenseStarted=0;this.player.shiftWasDown=false;this.player.dodging=false;this.player.dodgeUntil=0;this.player.nextDodge=0;this.player.wasGrounded=true;this.player.brokkLandUntil=0;
   this.cursors=this.input.keyboard.createCursorKeys();this.wasd=this.input.keyboard.addKeys('W,A,S,D');this.keys=this.input.keyboard.addKeys('SHIFT');
   this.cameras.main.setBounds(0,0,2400,H);this.cameras.main.startFollow(this.player,true,.08,.08);
   this.enemies=this.physics.add.group();
@@ -94,16 +94,22 @@ class Game extends Phaser.Scene{
   this.player.shiftWasDown=shiftDown;
   this.updateDefense(time,shiftDown);
   const defenseSlow=this.player.blocking?(run.selected==='mauricius'?.38:run.selected==='brokk'?.5:.7):1;
+  const onGroundNow=this.player.body.blocked.down;
+  if(run.selected==='brokk'&&onGroundNow&&!this.player.wasGrounded)this.player.brokkLandUntil=time+200;
+  const brokkLanding=run.selected==='brokk'&&time<this.player.brokkLandUntil;
   const moveSpeed=this.player.heavyWindup?p.speed*.28:p.speed*defenseSlow;
-  if(!this.player.dodging)this.player.body.setVelocityX(left?-moveSpeed:right?moveSpeed:0);
-  if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1;
+  if(brokkLanding)this.player.body.setVelocityX(0);
+  else if(!this.player.dodging)this.player.body.setVelocityX(left?-moveSpeed:right?moveSpeed:0);
+  if(!brokkLanding){if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1}
   if(this.brokkVisual){
-   const onGround=this.player.body.blocked.down;
+   const onGround=onGroundNow;
    const vy=this.player.body.velocity.y;
-   const running=onGround&&Math.abs(this.player.body.velocity.x)>10;
+   const running=onGround&&!brokkLanding&&Math.abs(this.player.body.velocity.x)>10;
    let key='brokk-idle';
-   if(!onGround){
-    key=vy<-70?'brokk-jump-up':vy>120?'brokk-jump-land':'brokk-jump-air';
+   if(brokkLanding){
+    key='brokk-jump-land';
+   }else if(!onGround){
+    key=vy<-70?'brokk-jump-up':'brokk-jump-air';
    }else if(running){
     const cycle=Math.floor(this.time.now/120)%4;
     key=cycle===1?'brokk-step-1':cycle===3?'brokk-step-2':'brokk-idle';
@@ -111,12 +117,13 @@ class Game extends Phaser.Scene{
    if(this.brokkVisual.texture.key!==key)this.brokkVisual.setTexture(key);
    const visual={ 
     'brokk-idle':{scale:.15,foot:37},'brokk-step-1':{scale:.15,foot:36},'brokk-step-2':{scale:.15,foot:36},
-    'brokk-jump-up':{scale:.15,foot:38},'brokk-jump-air':{scale:.15,foot:41},'brokk-jump-land':{scale:.15,foot:31}
+    'brokk-jump-up':{scale:.20,foot:38},'brokk-jump-air':{scale:.20,foot:41},'brokk-jump-land':{scale:.20,foot:31}
    }[key];
    this.brokkVisual.setScale(visual.scale);
    this.brokkVisual.setPosition(this.player.x,this.player.body.bottom-visual.foot);this.brokkVisual.setFlipX(this.player.facing<0)
   }
-  if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down)this.player.body.setVelocityY(-p.jump);
+  this.player.wasGrounded=onGroundNow;
+  if((Phaser.Input.Keyboard.JustDown(this.cursors.space)||Phaser.Input.Keyboard.JustDown(this.wasd.W)||Phaser.Input.Keyboard.JustDown(this.cursors.up))&&this.player.body.blocked.down&&!brokkLanding)this.player.body.setVelocityY(-p.jump);
   if(this.player.iframes>0)this.player.iframes-=this.game.loop.delta;
   this.enemies.children.iterate(e=>{
    if(!e?.body)return;
