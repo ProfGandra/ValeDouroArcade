@@ -10,7 +10,7 @@ Object.keys(roster).forEach(k=>run.hp[k]=roster[k].hp);
 
 class Boot extends Phaser.Scene{
  constructor(){super('boot')}
- preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png');this.load.image('brokk-step-1','assets/characters/brokk/step_1.png');this.load.image('brokk-step-2','assets/characters/brokk/step_2.png');this.load.image('brokk-jump-up','assets/characters/brokk/jump_up.png');this.load.image('brokk-jump-air','assets/characters/brokk/jump_air.png');this.load.image('brokk-jump-land','assets/characters/brokk/jump_land.png')}
+ preload(){this.load.image('brokk-idle','assets/characters/brokk/idle.png');this.load.image('brokk-step-1','assets/characters/brokk/step_1.png');this.load.image('brokk-step-2','assets/characters/brokk/step_2.png');this.load.image('brokk-jump-up','assets/characters/brokk/jump_up.png');this.load.image('brokk-jump-air','assets/characters/brokk/jump_air.png');this.load.image('brokk-jump-land','assets/characters/brokk/jump_land.png');this.load.image('brokk-attack-1-windup','assets/characters/brokk/attack_1_windup.png');this.load.image('brokk-attack-1-strike','assets/characters/brokk/attack_1_strike.png');this.load.image('brokk-attack-1-recovery','assets/characters/brokk/attack_1_recovery.png')}
  create(){this.scene.start('menu')}
 }
 class Menu extends Phaser.Scene{
@@ -18,7 +18,7 @@ class Menu extends Phaser.Scene{
  create(){
   this.cameras.main.setBackgroundColor('#111821');
   this.add.text(W/2,150,'VALEDOURO\nARCADE',{fontFamily:'monospace',fontSize:'64px',align:'center',color:'#e8d39b',stroke:'#000',strokeThickness:8}).setOrigin(.5);
-  this.add.text(W/2,285,'PROTÓTIPO v0.1.23',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
+  this.add.text(W/2,285,'PROTÓTIPO v0.1.24',{fontFamily:'monospace',fontSize:'20px',color:'#aaa'}).setOrigin(.5);
   const b=this.add.text(W/2,365,'[ JOGAR ]',{fontFamily:'monospace',fontSize:'32px',color:'#fff',backgroundColor:'#563d27',padding:{x:20,y:12}}).setOrigin(.5).setInteractive({useHandCursor:true});
   b.on('pointerdown',()=>this.scene.start('select'));
   this.add.text(W/2,455,'WASD / setas: mover   ESPAÇO: pular   mouse: atacar',{fontFamily:'monospace',fontSize:'16px',color:'#999'}).setOrigin(.5);
@@ -67,7 +67,7 @@ class Game extends Phaser.Scene{
   if(k==='brokk'){this.player.setVisible(false);this.brokkVisual=this.add.sprite(this.player.x,this.player.y,'brokk-idle').setScale(0.15).setDepth(5)}
   this.player.body.setCollideWorldBounds(true).setGravityY(900);this.physics.add.collider(this.player,this.ground);
   this.physics.world.staticBodies.entries.slice(1).forEach(b=>this.physics.add.collider(this.player,b.gameObject));
-  this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;this.player.facing=1;this.player.comboStep=0;this.player.comboUntil=0;this.player.defenseStarted=0;this.player.shiftWasDown=false;this.player.dodging=false;this.player.dodgeUntil=0;this.player.nextDodge=0;this.player.wasGrounded=true;this.player.brokkLandUntil=0;this.player.brokkJumpUpUntil=0;
+  this.player.hp=run.hp[k];this.player.maxHp=p.hp;this.player.iframes=0;this.player.nextAttack=0;this.player.blocking=false;this.player.heavyWindup=false;this.player.facing=1;this.player.comboStep=0;this.player.comboUntil=0;this.player.defenseStarted=0;this.player.shiftWasDown=false;this.player.dodging=false;this.player.dodgeUntil=0;this.player.nextDodge=0;this.player.wasGrounded=true;this.player.brokkLandUntil=0;this.player.brokkJumpUpUntil=0;this.player.brokkAttackUntil=0;this.player.brokkAttackPhase='';
   this.cursors=this.input.keyboard.createCursorKeys();this.wasd=this.input.keyboard.addKeys('W,A,S,D');this.keys=this.input.keyboard.addKeys('SHIFT');
   this.cameras.main.setBounds(0,0,2400,H);this.cameras.main.startFollow(this.player,true,.08,.08);
   this.enemies=this.physics.add.group();
@@ -97,16 +97,19 @@ class Game extends Phaser.Scene{
   const onGroundNow=this.player.body.blocked.down;
   if(run.selected==='brokk'&&onGroundNow&&!this.player.wasGrounded)this.player.brokkLandUntil=time+200;
   const brokkLanding=run.selected==='brokk'&&time<this.player.brokkLandUntil;
+  const brokkAttacking=run.selected==='brokk'&&time<this.player.brokkAttackUntil;
   const moveSpeed=this.player.heavyWindup?p.speed*.28:p.speed*defenseSlow;
-  if(brokkLanding)this.player.body.setVelocityX(0);
+  if(brokkLanding||brokkAttacking)this.player.body.setVelocityX(0);
   else if(!this.player.dodging)this.player.body.setVelocityX(left?-moveSpeed:right?moveSpeed:0);
-  if(!brokkLanding){if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1}
+  if(!brokkLanding&&!brokkAttacking){if(left&&!right)this.player.facing=-1;else if(right&&!left)this.player.facing=1}
   if(this.brokkVisual){
    const onGround=onGroundNow;
    const vy=this.player.body.velocity.y;
    const running=onGround&&!brokkLanding&&Math.abs(this.player.body.velocity.x)>10;
    let key='brokk-idle';
-   if(brokkLanding){
+   if(brokkAttacking){
+    key='brokk-attack-1-'+this.player.brokkAttackPhase;
+   }else if(brokkLanding){
     key='brokk-jump-land';
    }else if(!onGround){
     key=time<this.player.brokkJumpUpUntil?'brokk-jump-up':'brokk-jump-air';
@@ -117,7 +120,8 @@ class Game extends Phaser.Scene{
    if(this.brokkVisual.texture.key!==key)this.brokkVisual.setTexture(key);
    const visual={ 
     'brokk-idle':{scale:.15,foot:37},'brokk-step-1':{scale:.15,foot:36},'brokk-step-2':{scale:.15,foot:36},
-    'brokk-jump-up':{scale:.20,foot:38},'brokk-jump-air':{scale:.17,foot:41},'brokk-jump-land':{scale:.19,foot:31}
+    'brokk-jump-up':{scale:.20,foot:38},'brokk-jump-air':{scale:.17,foot:41},'brokk-jump-land':{scale:.19,foot:31},
+    'brokk-attack-1-windup':{scale:.15,foot:31},'brokk-attack-1-strike':{scale:.15,foot:29},'brokk-attack-1-recovery':{scale:.15,foot:27}
    }[key];
    this.brokkVisual.setScale(visual.scale);
    this.brokkVisual.setPosition(this.player.x,this.player.body.bottom-visual.foot);this.brokkVisual.setFlipX(this.player.facing<0)
@@ -200,27 +204,25 @@ class Game extends Phaser.Scene{
   if(step===3)this.player.comboUntil=0;
  }
  brokkHeavyAttack(p){
-  const dir=this.player.facing;
-  this.player.heavyWindup=true;this.player.nextAttack=this.time.now+720;
-  const marker=this.add.text(this.player.x,this.player.y-52,'!',{fontFamily:'monospace',fontSize:'28px',color:'#f1c36f',stroke:'#000',strokeThickness:4}).setOrigin(.5);
-  this.time.delayedCall(260,()=>{
-   if(!this.player?.active){marker.destroy();return}
-   marker.destroy();
-   const box=this.add.rectangle(this.player.x+dir*38,this.player.y+5,62,62,0xffb24a,.42);this.physics.add.existing(box);box.body.setAllowGravity(false);
-   let connected=false;
-   const hitThisSwing=new Set();
+  if(!this.player.body.blocked.down)return;
+  const dir=this.player.facing,start=this.time.now;
+  this.player.heavyWindup=true;this.player.nextAttack=start+350;
+  this.player.brokkAttackUntil=start+350;this.player.brokkAttackPhase='windup';
+  this.player.body.setVelocityX(0);
+  this.time.delayedCall(100,()=>{
+   if(!this.player?.active)return;
+   this.player.brokkAttackPhase='strike';
+   const box=this.add.rectangle(this.player.x+dir*42,this.player.y+2,70,58,0xffb24a,.42);this.physics.add.existing(box);box.body.setAllowGravity(false);
+   const hitThisSwing=new Set();let connected=false;
    this.physics.add.overlap(box,this.enemies,(_,e)=>{
     if(!e.active||hitThisSwing.has(e))return;
     hitThisSwing.add(e);connected=true;
     const critical=Phaser.Math.Between(1,100)<=10;
     this.hitEnemy(e,p.damage+8,dir,{brokk:true,critical});
    },null,this);
-   this.time.delayedCall(115,()=>{
-    if(connected)this.cameras.main.shake(105,.009);
-    if(box.active)box.destroy();
-   });
-   this.player.heavyWindup=false;
+   this.time.delayedCall(120,()=>{if(connected)this.cameras.main.shake(105,.009);if(box.active)box.destroy();if(this.player?.active)this.player.brokkAttackPhase='recovery'});
   });
+  this.time.delayedCall(350,()=>{if(!this.player?.active)return;this.player.heavyWindup=false;this.player.brokkAttackPhase=''});
  }
  shootArrow(dmg){
   const world=this.input.activePointer.positionToCamera(this.cameras.main),a=Phaser.Math.Angle.Between(this.player.x,this.player.y,world.x,world.y);
